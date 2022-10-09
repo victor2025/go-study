@@ -25,8 +25,7 @@ func main() {
 	fmt.Println()
 }
 
-/*
-*
+/**
 闭包生成函数
 */
 func compute(c int) func(a int) int {
