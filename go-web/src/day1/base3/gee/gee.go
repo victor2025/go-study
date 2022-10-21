@@ -10,6 +10,7 @@ package gee
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -21,8 +22,9 @@ type Engine struct {
 	router map[string]HandlerFunc
 }
 
-// 创建Engine的方法
+// 创建Engine的方法，工厂模式
 func New() *Engine {
+	// 返回生成的Engine
 	return &Engine{router: make(map[string]HandlerFunc)}
 }
 
@@ -36,6 +38,7 @@ func (engine *Engine) addRoute(method string, pattern string, handler HandlerFun
 
 // 添加Get请求的方法
 func (engine *Engine) GET(pattern string, handler HandlerFunc) {
+	// 调用公用方法添加路由
 	engine.addRoute("GET", pattern, handler)
 }
 
@@ -46,7 +49,12 @@ func (engine *Engine) POST(pattern string, handler HandlerFunc) {
 
 // 开启服务器
 func (engine *Engine) Run(addr string) (err error) {
-	return http.ListenAndServe(addr, engine)
+	// 开始监听端口，提供服务
+	res := http.ListenAndServe(addr, engine)
+	// 在发生错误时输出日志
+	log.Fatal(res)
+	// 返回可能的错误
+	return res
 }
 
 // Engine要实现的接口中的方法
@@ -55,8 +63,10 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	key := req.Method + "-" + req.URL.Path
 	// 查找对应的处理器
 	if handler, ok := engine.router[key]; ok {
+		// 存在对应的处理器，则进行处理
 		handler(w, req)
 	} else {
+		// 不存在对应的处理器，则打印404错误
 		fmt.Fprintf(w, "404 NOT FOUND: %s\n", req.URL)
 	}
 }
