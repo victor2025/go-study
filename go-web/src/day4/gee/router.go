@@ -12,7 +12,6 @@
 package gee
 
 import (
-	"log"
 	"net/http"
 	"strings"
 )
@@ -33,7 +32,7 @@ func newRouter() *router {
 	}
 }
 
-// 解析访问地址，整个地址中只能有一个通配符*
+// 解析访问地址，整个地址中只能有一个通配符
 func parsePattern(pattern string) []string {
 	vs := strings.Split(pattern, "/")
 	// 存储parts
@@ -41,7 +40,7 @@ func parsePattern(pattern string) []string {
 	for _, item := range vs {
 		if item != "" {
 			parts = append(parts, item)
-			// 通配符*只能放在整个匹配串的结尾
+			// 通配符只能放在整个匹配串的结尾
 			if item[0] == '*' {
 				break
 			}
@@ -52,7 +51,6 @@ func parsePattern(pattern string) []string {
 
 // 添加路由
 func (r *router) addRoute(method string, pattern string, handler HandlerFunc) {
-	log.Printf("Route %4s - %s", method, pattern)
 	// 解析访问地址
 	parts := parsePattern(pattern)
 	// 生成对应的key

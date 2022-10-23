@@ -15,7 +15,7 @@ import (
 // trie的节点结构
 type node struct {
 	pattern  string  // 当前节点对应路由，只有叶子节点当前属性才不为空
-	part     string  // 路由部分
+	part     string  // 路由中的部分
 	children []*node // 子节点
 	isWild   bool    // 标志当前节点是否需要精确匹配，part含有:或者*时为true
 }

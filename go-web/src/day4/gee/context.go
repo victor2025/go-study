@@ -46,7 +46,7 @@ func newContext(w http.ResponseWriter, req *http.Request) *Context {
 
 // 获取路径中包含的参数
 func (c *Context) Param(key string) string {
-	value := c.Params[key]
+	value, _ := c.Params[key]
 	return value
 }
 
