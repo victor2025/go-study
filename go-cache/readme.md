@@ -1,6 +1,6 @@
 # Study of go-cache based on geektutu
 基于golang的分布式缓存
-[7days-golang](https://geektutu.com/post/gee-day1.html)
+[7days-golang](https://geektutu.com/post/geecache-day1.html)
 [golang-api](https://studygolang.com/pkgdoc)
 
 ### 介绍
