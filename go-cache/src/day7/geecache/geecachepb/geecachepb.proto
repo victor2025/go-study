@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package geecachepb;
+
+// 请求中传输两个参数，group和key
+message Request{
+    string group = 1;
+    string key = 2;
+}
+
+// 响应中只包含响应体一个参数
+message Response{
+    bytes value = 1;
+}
+
+// 定义请求服务
+service GroupCache{
+    rpc Get(Request) returns (Response);
+}
