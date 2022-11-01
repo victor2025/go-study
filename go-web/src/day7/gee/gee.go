@@ -9,11 +9,11 @@
 package gee
 
 import (
+	"html/template"
 	"log"
 	"net/http"
-	"strings"
 	"path"
-	"html/template"
+	"strings"
 )
 
 type (
@@ -32,10 +32,10 @@ type (
 	// 将Engine抽象为一个顶层分组
 	Engine struct {
 		*RouterGroup
-		router *router
-		groups []*RouterGroup // store all groups
+		router        *router
+		groups        []*RouterGroup     // store all groups
 		htmlTemplates *template.Template // for html render
-		funcMap template.FuncMap // for html render
+		funcMap       template.FuncMap   // for html render
 	}
 )
 
@@ -51,10 +51,10 @@ func New() *Engine {
 
 /*
 @Time    :   2022/10/24 10:47:49
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   创建Engine，默认使用logger和recovery插件
 */
-func Default() *Engine{
+func Default() *Engine {
 	engine := New()
 	// 设置中间件
 	engine.Use(Logger(), Recovery())
@@ -62,7 +62,7 @@ func Default() *Engine{
 }
 
 // 向group中添加中间件
-func (group *RouterGroup) Use(middlewares ...HandlerFunc){
+func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
 	group.middlewares = append(group.middlewares, middlewares...)
 }
 
@@ -114,17 +114,17 @@ func (engine *Engine) Run(addr string) (err error) {
 
 /*
 @Time    :   2022/10/23 19:59:26
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   生成静态资源处理器
 */
-func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc{
-	absPath:= path.Join(group.prefix, relativePath)
-	fileServer := http.StripPrefix(absPath,http.FileServer(fs))
+func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc {
+	absPath := path.Join(group.prefix, relativePath)
+	fileServer := http.StripPrefix(absPath, http.FileServer(fs))
 	log.Printf("File Server - %s -> %v", absPath, fs)
-	return func(c *Context){
+	return func(c *Context) {
 		file := c.Param("filepath")
 		// 检查是否存在当前文件
-		if _, err := fs.Open(file); err!=nil {
+		if _, err := fs.Open(file); err != nil {
 			c.Status(http.StatusNotFound)
 			return
 		}
@@ -135,11 +135,11 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 
 /*
 @Time    :   2022/10/23 19:58:00
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   注册文件服务
 root为文件在系统中的路径
 */
-func (group *RouterGroup) Static(relativePath string, root string){
+func (group *RouterGroup) Static(relativePath string, root string) {
 	handler := group.createStaticHandler(relativePath, http.Dir(root))
 	urlPattern := path.Join(relativePath, "/*filepath")
 	// 注册Get请求
@@ -148,33 +148,33 @@ func (group *RouterGroup) Static(relativePath string, root string){
 
 /*
 @Time    :   2022/10/23 21:24:48
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   设置页面渲染函数
 */
-func (engine *Engine) SetFuncMap(funcMap template.FuncMap){
+func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
 	engine.funcMap = funcMap
 }
 
 /*
 @Time    :   2022/10/23 21:28:18
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   加载模板
 */
-func (engine *Engine) LoadHTMLGlob(pattern string){
+func (engine *Engine) LoadHTMLGlob(pattern string) {
 	engine.htmlTemplates = template.Must(template.New("").Funcs(engine.funcMap).ParseGlob(pattern))
 }
 
 /*
 @Time    :   2022/10/23 21:33:54
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   服务器接口方法
 */
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// 获取全局handler(定义在engine中的handler)
 	var middlewares []HandlerFunc
-	for _, group := range engine.groups{
-		if strings.HasPrefix(req.URL.Path, group.prefix){
-			middlewares = append(middlewares,group.middlewares...)
+	for _, group := range engine.groups {
+		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
 		}
 	}
 	// 创建对应的上下文
