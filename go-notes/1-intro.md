@@ -1,8 +1,13 @@
 # Go介绍
 ### 学习资料
-[Go语言中文API](https://studygolang.com/pkgdoc)
-[7days-golang](https://geektutu.com/post/gee.html)
+- 基础\
+[Go语言中文API](https://studygolang.com/pkgdoc)\
 [各种技术入门](https://learnxinyminutes.com/)
+- 项目\
+[7days-golang](https://geektutu.com/post/gee.html)\
+[dmt-分布式事务管理器](https://dtm.pub/guide/start.html)\
+[不错的开源golang项目](https://www.zhihu.com/question/48821269)
+
 ### Golang产生的原因
 - 合理利用多核多CPU的优势提升软件系统性能
 - 需要足够简洁高效的语言减小软件系统的复杂度
