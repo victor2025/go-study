@@ -6,7 +6,12 @@
 - 项目\
 [7days-golang](https://geektutu.com/post/gee.html)\
 [dmt-分布式事务管理器](https://dtm.pub/guide/start.html)\
-[不错的开源golang项目](https://www.zhihu.com/question/48821269)
+[不错的开源golang项目](https://www.zhihu.com/question/48821269)\
+[Go语言值得学吗，有哪些好入门的简单项目？](https://www.zhihu.com/question/437250309)
+- 资料\
+[Go 语言设计与实现](https://draveness.me/golang/)\
+[Go语言高级编程(Advanced Go Programming)](https://chai2010.cn/advanced-go-programming-book/)\
+[Go语言面试题](https://www.topgoer.cn/docs/gomianshiti/mianshiti)
 
 ### Golang产生的原因
 - 合理利用多核多CPU的优势提升软件系统性能

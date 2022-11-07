@@ -86,7 +86,7 @@ func Accept(lis net.Listener) {
 
 /*
 @Time    :   2022/11/04 10:35:56
-@Author  :   victor2022 
+@Author  :   victor2022
 @Desc    :   循环处理连接
 */
 func (server *Server) ServeConn(conn io.ReadWriteCloser) {
@@ -114,6 +114,7 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 		return
 	}
 	// 对剩余信息进行处理
+	// 向函数中传入对应的编码解码器
 	server.serveCodec(f(conn))
 }
 
@@ -130,6 +131,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 	wg := new(sync.WaitGroup)  // 同步器，保证所有的请求都被处理
 	// 持续读取请求
 	for {
+		// 解码请求
 		req, err := server.readRequest(cc)
 		if err != nil {
 			if req == nil {
@@ -143,6 +145,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 		// 加锁，等待请求响应
 		wg.Add(1)
 		// 处理请求，使用sending锁保证单个连接中的多个报文逐个发送
+		// 使用goroutine进行异步处理
 		go server.handleRequest(cc, req, sending, wg)
 	}
 	// 等待所有响应都处理完成
@@ -189,6 +192,7 @@ func (server *Server) readRequest(cc codec.Codec) (*request, error) {
 	}
 	req := &request{h: h}
 	// TODO 假定当前请求体为string类型
+	// 读取请求参数，argv为reflect.Value类型
 	req.argv = reflect.New(reflect.TypeOf(""))
 	if err = cc.ReadBody(req.argv.Interface()); err != nil {
 		log.Println("rpc server: read argv err:", err)
