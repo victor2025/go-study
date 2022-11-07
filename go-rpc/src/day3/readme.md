@@ -1,0 +1,11 @@
+# day3
+- 服务注册，将本地方法暴露为远程服务
+- 支持rpc调用的函数需要满足的条件：
+  - the method’s type is exported.
+  - the method is exported.
+  - the method has two arguments, both exported (or builtin) types.
+  - the method’s second argument is a pointer.
+  - the method has return type error.
+  - `func (t *T) MethodName(argType T1, replyType *T2) error`
+- 对于用户发送的调用请求，需要使用反射的方式创建对应的结构体，减少代码量
+- 在服务注册和方法调用过程中，需要用到大量的反射类型数据进行操作
