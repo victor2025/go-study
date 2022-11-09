@@ -9,3 +9,5 @@
   - `func (t *T) MethodName(argType T1, replyType *T2) error`
 - 对于用户发送的调用请求，需要使用反射的方式创建对应的结构体，减少代码量
 - 在服务注册和方法调用过程中，需要用到大量的反射类型数据进行操作
+  - reflect.Type
+  - reflect.Value

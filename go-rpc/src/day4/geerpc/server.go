@@ -11,6 +11,7 @@ package geerpc
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"geerpc/codec"
 	"go/ast"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // 魔数，作为框架标记
@@ -31,8 +33,10 @@ const MagicNumber = 0x3bef5c
 @Desc    :   数据传输中的消息的配置项
 */
 type Option struct {
-	MagicNumber int
-	CodecType   codec.Type
+	MagicNumber       int           // 框架类型标记
+	CodecType         codec.Type    // 编码类型
+	ConnectionTimeout time.Duration // 连接超时时间，0表示无限制
+	HandleTimeout     time.Duration // 处理请求超时时间，0表示无限制
 }
 
 /*
@@ -41,8 +45,9 @@ type Option struct {
 @Desc    :   定义默认Option
 */
 var DefaultOption = &Option{
-	MagicNumber: MagicNumber,
-	CodecType:   codec.GobType,
+	MagicNumber:       MagicNumber,
+	CodecType:         codec.GobType,
+	ConnectionTimeout: time.Second * 10,
 }
 
 // 服务端结构体
@@ -171,8 +176,8 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 		return
 	}
 	// 对剩余信息进行处理
-	// 向函数中传入对应的编码解码器
-	server.serveCodec(f(conn))
+	// 向函数中传入对应的编码解码器和配置
+	server.serveCodec(f(conn), &opt)
 }
 
 // 当返回值发生问题时，使用该变量作为作为占位符
@@ -183,7 +188,7 @@ var invalidRequest = struct{}{}
 @Author  :   victor2022
 @Desc    :   解码请求并发送给函数进行请求
 */
-func (server *Server) serveCodec(cc codec.Codec) {
+func (server *Server) serveCodec(cc codec.Codec, opt *Option) {
 	sending := new(sync.Mutex) // 同步器，保证传输过程不被干扰
 	wg := new(sync.WaitGroup)  // 同步器，保证所有的请求都被处理
 	// 持续读取请求
@@ -203,7 +208,7 @@ func (server *Server) serveCodec(cc codec.Codec) {
 		wg.Add(1)
 		// 处理请求，使用sending锁保证单个连接中的多个报文逐个发送
 		// 使用goroutine进行异步处理
-		go server.handleRequest(cc, req, sending, wg)
+		go server.handleRequest(cc, req, sending, wg, opt.HandleTimeout)
 	}
 	// 等待所有响应都处理完成
 	wg.Wait()
@@ -275,21 +280,50 @@ func (server *Server) readRequestHeader(cc codec.Codec) (*codec.Header, error) {
 /*
 @Time    :   2022/11/03 22:28:21
 @Author  :   victor2022
-@Desc    :   处理请求
+@Desc    :   处理请求，考虑超时时间
 */
-func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup) {
+func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.Mutex, wg *sync.WaitGroup, timeout time.Duration) {
 	// 完成之后解锁一次
 	defer wg.Done()
-	// 调用service进行调用
-	err := req.svc.call(req.mType, req.argv, req.replyv)
-	// 若出错，则返回出错信息
-	if err != nil {
-		req.h.Error = err.Error()
-		server.sendResponse(cc, req.h, invalidRequest, sending)
+	// 创建channel
+	called := make(chan struct{})
+	sent := make(chan struct{})
+	// 异步调用和响应
+	go func() {
+		// 发起调用
+		err := req.svc.call(req.mType, req.argv, req.replyv)
+		// 发送调用完成信号
+		called <- struct{}{}
+		// 若调用出错，则返回出错信息
+		if err != nil {
+			req.h.Error = err.Error()
+			// 发送包含错误信息的响应
+			server.sendResponse(cc, req.h, invalidRequest, sending)
+			// 发送响应完成信号
+			sent <- struct{}{}
+			return
+		}
+		// 若调用没有出错，则发送调用结果
+		server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
+		sent <- struct{}{}
+	}()
+	// 处理超时问题
+	// 没有规定超时时间，同步等待调用结果
+	if timeout == 0 {
+		<-called
+		<-sent
 		return
 	}
-	// 若没有出错，则返回调用结果
-	server.sendResponse(cc, req.h, req.replyv.Interface(), sending)
+	// 规定了超时时间，则进行不同处理
+	select {
+	case <-time.After(timeout):
+		// 超时了，则返回错误
+		req.h.Error = fmt.Sprintf("rpc server: request handle timeout: expect within %s", timeout)
+		server.sendResponse(cc, req.h, invalidRequest, sending)
+	case <-called:
+		// 正常完成了调用，则等待响应发送完成
+		<-sent
+	}
 }
 
 /*
