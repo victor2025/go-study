@@ -24,6 +24,10 @@ func GetICMPingMsg() *ICMP {
 	}
 }
 
+func (msg *ICMP) IncrSeqNum() {
+	msg.SeqNum++
+}
+
 func (icmp *ICMP) GetBytes(size int) *[]byte {
 	// 写入byte数组
 	var buffer bytes.Buffer

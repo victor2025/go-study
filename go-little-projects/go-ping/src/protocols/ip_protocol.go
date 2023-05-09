@@ -12,6 +12,7 @@ type IP struct {
 	Source IpAddr
 	Aim    IpAddr
 	Body   []byte
+	SeqNum uint16
 }
 
 func ParseBytes2Ip(data []byte) (*IP, error) {
@@ -26,12 +27,14 @@ func ParseBytes2Ip(data []byte) (*IP, error) {
 	source := data[12:16]
 	aim := data[16:20]
 	body := data[20:]
+	seqNum := uint16(utils.Bytes2Uint64(body[6:8])) + 1
 	return &IP{
 		Size:   size,
 		TTL:    ttl,
 		Source: source,
 		Aim:    aim,
 		Body:   body,
+		SeqNum: seqNum,
 	}, nil
 }
 

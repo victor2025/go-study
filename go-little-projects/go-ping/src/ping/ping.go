@@ -11,7 +11,7 @@ import (
 )
 
 type PingHandler struct {
-	reqBytes   []byte // icmp ping请求byte数组
+	icmp       *p.ICMP // icmp ping请求byte数组
 	start      time.Time
 	timeout    time.Duration
 	size       int
@@ -31,13 +31,13 @@ func NewPingHandler(timeout int64, size, count int, mode bool, addr string) *Pin
 	}
 	// 返回对象
 	return &PingHandler{
-		reqBytes: *p.GetICMPingMsg().GetBytes(size),
-		timeout:  time.Duration(timeout) * time.Millisecond,
-		size:     size,
-		count:    count,
-		addr:     addr,
-		minTime:  math.MaxFloat32,
-		maxTime:  0.0,
+		icmp:    p.GetICMPingMsg(),
+		timeout: time.Duration(timeout) * time.Millisecond,
+		size:    size,
+		count:   count,
+		addr:    addr,
+		minTime: math.MaxFloat32,
+		maxTime: 0.0,
 	}
 }
 
@@ -58,9 +58,10 @@ func (h *PingHandler) StartPing() {
 		conn.SetDeadline(start.Add(h.timeout))
 
 		// 发送报文
-		_, err := conn.Write(h.reqBytes)
-		h.sendCnt++
+		_, err := conn.Write(*h.icmp.GetBytes(h.size))
 		u.CheckErr(err)
+		h.icmp.IncrSeqNum() // 增加序列号
+		h.sendCnt++
 
 		// 接收响应
 		buf := make([]byte, 65535)
@@ -95,15 +96,15 @@ func (h *PingHandler) successPing(res *p.IP, dur time.Duration) {
 		h.minTime = durTime
 	}
 	// 打印本次结果
-	fmt.Printf("received %d bytes from %v: ttl=%d rtt=%.2fms\n",
-		res.Size-28, res.Source, res.TTL, durTime)
+	fmt.Printf("received %d bytes from %v: icmp_seq=%d ttl=%d rtt=%.2fms\n",
+		res.Size-28, res.Source, res.SeqNum, res.TTL, durTime)
 }
 
 func (h *PingHandler) endPing() {
 	lostPercent := float32(h.sendCnt-h.successCnt) / float32(h.sendCnt) * 100
 	avgTime := float32(h.totalTime / float64(h.successCnt))
 	fmt.Printf("\n--- Ping %v statistics ---\n", h.addr)
-	fmt.Printf("send %d packs, received %d packs, lost %.2f%%, cost %dms\n",
+	fmt.Printf("sent %d packs, received %d packs, lost %.2f%%, cost %dms\n",
 		h.sendCnt, h.successCnt, lostPercent, time.Since(h.start).Milliseconds())
 	fmt.Printf("avg rtt: %.2fms, min rtt: %.2fms, max rtt: %.2fms\n",
 		avgTime, h.minTime, h.maxTime)
