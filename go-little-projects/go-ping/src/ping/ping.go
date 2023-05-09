@@ -2,12 +2,12 @@ package ping
 
 import (
 	"fmt"
+	p "go-ping/protocols"
+	u "go-ping/utils"
 	"math"
 	"net"
 	"os"
-	p "protocols"
 	"time"
-	u "utils"
 )
 
 type PingHandler struct {

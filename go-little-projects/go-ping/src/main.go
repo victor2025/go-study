@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
+	"go-ping/ping"
 	"os"
-	"ping"
 )
 
 var (

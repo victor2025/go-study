@@ -3,7 +3,7 @@ package protocols
 import (
 	"errors"
 	"fmt"
-	"utils"
+	"go-ping/utils"
 )
 
 type IP struct {
