@@ -3,10 +3,12 @@ package utils
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var (
@@ -33,8 +35,17 @@ func initConfig() {
 }
 
 func initMySQL() {
+	mysqlLogger := logger.New(
+		log.New(os.Stdout, "\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold: time.Second, // 慢查询阈值
+			LogLevel:      logger.Info,
+			Colorful:      true,
+		},
+	)
 	var err error
-	DB, err = gorm.Open(mysql.Open(viper.GetString("mysql.dsn")), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(viper.GetString("mysql.dsn")),
+		&gorm.Config{Logger: mysqlLogger})
 	HandleError(err)
 	_ = DB
 }

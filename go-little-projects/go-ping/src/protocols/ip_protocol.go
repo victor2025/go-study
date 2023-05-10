@@ -15,6 +15,8 @@ type IP struct {
 	SeqNum uint16
 }
 
+type IpAddr []byte
+
 func ParseBytes2Ip(data []byte) (*IP, error) {
 	// 校验data长度
 	l := len(data)
@@ -37,8 +39,6 @@ func ParseBytes2Ip(data []byte) (*IP, error) {
 		SeqNum: seqNum,
 	}, nil
 }
-
-type IpAddr []byte
 
 func (addr IpAddr) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3])

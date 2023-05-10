@@ -9,4 +9,113 @@ paths:
           description: OK
           schema:
             type: string
+      tags:
+      - Index
+  /user/create:
+    get:
+      description: create new user
+      parameters:
+      - description: 用户名
+        in: query
+        name: name
+        type: string
+      - description: 密码
+        in: query
+        name: password
+        type: string
+      - description: 重复输入密码
+        in: query
+        name: repassword
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 新建用户
+      tags:
+      - 用户模块
+  /user/delete:
+    get:
+      description: delete user
+      parameters:
+      - description: id
+        in: query
+        name: id
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 删除用户
+      tags:
+      - 用户模块
+  /user/find:
+    get:
+      description: find user
+      parameters:
+      - description: username
+        in: query
+        name: name
+        type: string
+      - description: phone
+        in: query
+        name: phone
+        type: string
+      - description: email
+        in: query
+        name: email
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 查找指定用户
+      tags:
+      - 用户模块
+  /user/list:
+    get:
+      description: get user list
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 获取用户列表
+      tags:
+      - 用户模块
+  /user/update:
+    post:
+      description: update user
+      parameters:
+      - description: id
+        in: formData
+        name: id
+        type: string
+      - description: username
+        in: formData
+        name: name
+        type: string
+      - description: password
+        in: formData
+        name: password
+        type: string
+      - description: phone
+        in: formData
+        name: phone
+        type: string
+      - description: email
+        in: formData
+        name: email
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 修改用户
+      tags:
+      - 用户模块
 swagger: "2.0"

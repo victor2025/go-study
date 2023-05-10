@@ -2,6 +2,7 @@ package service
 
 import "github.com/gin-gonic/gin"
 
+// @Tags Index
 // @Schemes
 // @Description index
 // @Success 200 {string} index

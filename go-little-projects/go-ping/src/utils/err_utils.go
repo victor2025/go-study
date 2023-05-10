@@ -13,7 +13,7 @@ func CheckErr(err error, fbs ...func()) {
 		onSuccess = fbs[1]
 	}
 	if err != nil {
-		log.Fatalf("Fatal: %v", err)
+		log.Printf("Error: %v", err)
 		if onError != nil {
 			onError()
 		}

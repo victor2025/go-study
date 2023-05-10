@@ -4,16 +4,18 @@ import (
 	"log"
 )
 
-func HandleError(err error, fbs ...func()) {
+// err: error object
+// cbs: callback functions, [0]:onError [1]:onSuccess
+func HandleError(err error, cbs ...func()) {
 	var onError, onSuccess func()
-	if len(fbs) == 1 {
-		onError = fbs[0]
-	} else if len(fbs) == 2 {
-		onError = fbs[0]
-		onSuccess = fbs[1]
+	if len(cbs) == 1 {
+		onError = cbs[0]
+	} else if len(cbs) == 2 {
+		onError = cbs[0]
+		onSuccess = cbs[1]
 	}
 	if err != nil {
-		log.Fatalf("Fatal: %v", err)
+		log.Panicf("Error: %v", err)
 		if onError != nil {
 			onError()
 		}

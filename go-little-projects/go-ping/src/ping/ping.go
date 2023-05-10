@@ -22,6 +22,7 @@ type PingHandler struct {
 	totalTime  float64
 	minTime    float32
 	maxTime    float32
+	seqNum     uint16
 }
 
 func NewPingHandler(timeout int64, size, count int, mode bool, addr string) *PingHandler {
@@ -31,13 +32,18 @@ func NewPingHandler(timeout int64, size, count int, mode bool, addr string) *Pin
 	}
 	// 返回对象
 	return &PingHandler{
-		icmp:    p.GetICMPingMsg(),
-		timeout: time.Duration(timeout) * time.Millisecond,
-		size:    size,
-		count:   count,
-		addr:    addr,
-		minTime: math.MaxFloat32,
-		maxTime: 0.0,
+		icmp:       p.GetICMPingMsg(),
+		start:      time.Time{},
+		timeout:    time.Duration(timeout) * time.Millisecond,
+		size:       size,
+		count:      count,
+		addr:       addr,
+		sendCnt:    0,
+		successCnt: 0,
+		totalTime:  0,
+		minTime:    math.MaxFloat32,
+		maxTime:    0.0,
+		seqNum:     0,
 	}
 }
 
@@ -61,6 +67,7 @@ func (h *PingHandler) StartPing() {
 		_, err := conn.Write(*h.icmp.GetBytes(h.size))
 		u.CheckErr(err)
 		h.icmp.IncrSeqNum() // 增加序列号
+		h.seqNum++
 		h.sendCnt++
 
 		// 接收响应
@@ -97,7 +104,7 @@ func (h *PingHandler) successPing(res *p.IP, dur time.Duration) {
 	}
 	// 打印本次结果
 	fmt.Printf("received %d bytes from %v: icmp_seq=%d ttl=%d rtt=%.2fms\n",
-		res.Size-28, res.Source, res.SeqNum, res.TTL, durTime)
+		res.Size-28, res.Source, h.seqNum, res.TTL, durTime)
 }
 
 func (h *PingHandler) endPing() {
