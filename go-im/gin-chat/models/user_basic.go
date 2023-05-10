@@ -17,6 +17,7 @@ type UserBasic struct {
 	Identity      string
 	ClientIp      string
 	ClientPort    string
+	Salt          string    // 密码盐
 	LoginTime     time.Time // 上线时间
 	HeartbeatTime time.Time // 心跳时间
 	LogoutTime    time.Time // 下线时间

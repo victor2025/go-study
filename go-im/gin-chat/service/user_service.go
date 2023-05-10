@@ -81,7 +81,12 @@ func CreateUser(c *gin.Context) {
 		})
 		return
 	}
-	user.Password = password
+
+	// 加salt生成password
+	salt := utils.GenSalt()
+	user.Salt = salt
+	user.Password = utils.MakePassword(password, salt) // 实际密码为加盐之后的md5串
+
 	success := models.CreateUser(user).RowsAffected
 
 	c.JSON(200, gin.H{
