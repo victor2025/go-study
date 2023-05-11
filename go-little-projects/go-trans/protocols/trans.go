@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"go-trans/utils"
+	"io"
 	"net"
 )
 
@@ -59,8 +60,8 @@ func NumTransMsg(data int64) *TRANS {
 	return trans
 }
 
-func EndTransMsg() *TRANS {
-	trans := ByteTransMsg([]byte{})
+func EndTransMsg(md5 []byte) *TRANS {
+	trans := ByteTransMsg(md5)
 	trans.Head.Type = EndType
 	return trans
 }
@@ -69,7 +70,7 @@ func ReceiveNextTrans(conn net.Conn) (*TRANS, error) {
 	var err error
 	// read head
 	headBytes := make([]byte, headSize)
-	_, err = conn.Read(headBytes)
+	_, err = io.ReadFull(conn, headBytes)
 	utils.HandleError(err)
 	if err != nil {
 		return nil, err
@@ -77,9 +78,9 @@ func ReceiveNextTrans(conn net.Conn) (*TRANS, error) {
 	head, err := parseHead(headBytes)
 	utils.HandleError(err)
 
-	// read filename
+	// read content
 	content := make([]byte, head.TotalSize-headSize)
-	_, err = conn.Read(content)
+	_, err = io.ReadFull(conn, content)
 	utils.HandleError(err, func() {})
 	return &TRANS{
 		Head:    head,
@@ -99,7 +100,7 @@ func parseHead(bytes []byte) (*THead, error) {
 	t := uint8(bytes[1])
 	size := utils.Bytes2Uint64(bytes[2:4])
 	return &THead{
-		Magic:     uint8(magic),
+		Magic:     magic,
 		Type:      TransType(t),
 		TotalSize: uint16(size),
 	}, nil

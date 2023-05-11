@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"crypto/md5"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"go-trans/protocols"
 	"go-trans/utils"
@@ -12,22 +14,22 @@ import (
 	"time"
 )
 
-type ServerHandler struct {
+type ReceiveHandler struct {
 	port     string
 	basePath string
 	listener net.Listener
 }
 
-func NewServerHandler(port, basePath string) *ServerHandler {
+func NewReceiveHandler(port, basePath string) *ReceiveHandler {
 	path, err := filepath.Abs(basePath)
 	utils.HandleError(err, utils.ExitOnErr)
-	return &ServerHandler{
+	return &ReceiveHandler{
 		port:     port,
 		basePath: path + "/",
 	}
 }
 
-func (s *ServerHandler) Handle() {
+func (s *ReceiveHandler) Handle() {
 	// 开启服务
 	s.startServer()
 	defer s.listener.Close() // 退出时关闭服务
@@ -48,8 +50,8 @@ func (s *ServerHandler) Handle() {
 	}
 }
 
-func (s *ServerHandler) startServer() {
-	log.Printf("--- Receive mode ---\n")
+func (s *ReceiveHandler) startServer() {
+	log.Printf("--- Receive mode ---")
 	// start tcp listen
 	listener, err := net.Listen("tcp", ":"+s.port)
 	utils.HandleError(err, utils.ExitOnErr)
@@ -57,7 +59,8 @@ func (s *ServerHandler) startServer() {
 	s.listener = listener
 }
 
-func (s *ServerHandler) serveConn(conn net.Conn) {
+func (s *ReceiveHandler) serveConn(conn net.Conn) {
+	log.Printf("--- New connection ---")
 	start := time.Now()
 	defer conn.Close()
 	var err error
@@ -75,6 +78,8 @@ func (s *ServerHandler) serveConn(conn net.Conn) {
 	// write file
 	seq := 0
 	dataSize := 0
+	var rcvdMd5 string
+	md5Chk := md5.New()
 	for {
 		// read bytes from connection
 		trans, err := protocols.ReceiveNextTrans(conn)
@@ -85,6 +90,7 @@ func (s *ServerHandler) serveConn(conn net.Conn) {
 
 		// if is end
 		if trans.Head.Type == protocols.EndType {
+			rcvdMd5 = hex.EncodeToString(trans.Content) // get remote md5
 			break
 		}
 
@@ -94,19 +100,30 @@ func (s *ServerHandler) serveConn(conn net.Conn) {
 		if err != nil {
 			return
 		}
+		md5Chk.Write(trans.Content)
 
 		// show status
 		seq++
 		dataSize += len(trans.Content)
-		log.Printf("seq: %v, received %d/%d(KB), percentage: %.2f%% ", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
+		log.Printf("seq: %v, received %d/%dKB(%.2f%%)", seq, dataSize/1024, fileSize/1024, 100*float64(dataSize)/float64(fileSize))
 
 	}
+
+	// show end status
 	dur := float32(time.Since(start).Microseconds()) / 1000
 	avgSpeed := float32(dataSize) / (1024 * dur / 1000)
-	log.Printf("Receive file success, total time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
+	md5 := hex.EncodeToString(md5Chk.Sum(nil))
+	log.Printf("--- Receive file complete ---")
+	log.Printf("Filepath: %s", file.Name())
+	log.Printf("MD5: %s", md5)
+	log.Printf("Info: total time: %.2fms, avg speed %.2fKB/s\n", dur, avgSpeed)
+	if md5 != rcvdMd5 {
+		log.Printf("WARN: File md5 is different, please check manually!")
+	}
 }
 
-func (s *ServerHandler) initFile(conn net.Conn) (*os.File, int64, error) {
+// return file, file size, error
+func (r *ReceiveHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 	var err error
 
 	// read filename trans msg
@@ -116,13 +133,13 @@ func (s *ServerHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 		return nil, 0, err
 	}
 	if trans.Head.Type != protocols.StrType {
-		return nil, 0, fmt.Errorf("error init filename")
+		return nil, 0, fmt.Errorf("error get file")
 	}
 
 	// receive filename
 	filename := string(trans.Content)
 	log.Printf("Receiving file: %s", filename)
-	path, err := filepath.Abs(s.basePath + filename)
+	path, err := filepath.Abs(r.basePath + filename)
 	utils.HandleError(err)
 	log.Printf("Saving file to: %s", path)
 	dir, _ := filepath.Split(path)
@@ -142,7 +159,7 @@ func (s *ServerHandler) initFile(conn net.Conn) (*os.File, int64, error) {
 		return nil, 0, err
 	}
 	if trans.Head.Type != protocols.NumType {
-		return nil, 0, fmt.Errorf("error init filename")
+		return nil, 0, fmt.Errorf("error get file size")
 	}
 	fileSize, _ := binary.Varint(trans.Content)
 	log.Printf("Total size : %d bytes", fileSize)
