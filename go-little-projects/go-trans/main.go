@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"go-trans/handlers"
 )
 
@@ -20,6 +21,8 @@ func main() {
 		flag.Usage()
 		return
 	}
+
+	log.Println("--- go-trans: a file transmitter by go ---")
 	// 判断参数合法性
 	if isReceive {
 		sHandler := handlers.NewReceiveHandler(port, output)
