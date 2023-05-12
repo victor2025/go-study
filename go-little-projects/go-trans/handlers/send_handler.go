@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-trans/protocols"
 	"go-trans/utils"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -34,6 +35,9 @@ func (s *SendHandler) Handle() {
 	start := time.Now()
 	// open local file
 	absPath, err := filepath.Abs(s.path)
+	if utils.IsDir(absPath) { // make sure is file
+		err = fmt.Errorf("filepath invalid")
+	}
 	utils.HandleError(err, utils.ExitOnErr)
 	file, err := os.Open(absPath)
 	utils.HandleError(err, utils.ExitOnErr)
@@ -68,7 +72,12 @@ func (s *SendHandler) Handle() {
 	for {
 		// read from file
 		n, err := file.Read(buf)
-		utils.HandleError(err)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			utils.HandleError(err)
+		}
 
 		// send to conn
 		trans := protocols.ByteTransMsg(buf[:n])

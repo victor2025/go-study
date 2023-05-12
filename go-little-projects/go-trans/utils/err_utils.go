@@ -20,7 +20,7 @@ func HandleError(err error, cbs ...func()) {
 		onSuccess = cbs[1]
 	}
 	if err != nil {
-		log.Panic(err)
+		log.Printf("Error: %s", err)
 		if onError != nil {
 			onError()
 		}
