@@ -1,5 +1,4 @@
 # go-study
-golang学习工程
 
 ## 1. go-tour
 golang语法练习
@@ -17,7 +16,7 @@ golang实现的rpc框架，参考grpc
 golang实现的web框架，参考gin
 
 ## 6. go-little-projects
-go编写的小工具
+golang编写的小工具
 
 - go-ping
   - 采用golang实现的ping工具
