@@ -39,7 +39,7 @@ func GetUserList() (*gorm.DB, []*UserBasic) {
 }
 
 func FindUser(user *UserBasic) *gorm.DB {
-	return utils.DB.Where(user).Find(user)
+	return utils.DB.Where(user).First(user)
 }
 
 func CreateUser(user *UserBasic) *gorm.DB {

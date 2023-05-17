@@ -47,6 +47,45 @@ func FindUser(c *gin.Context) {
 	})
 }
 
+// Login
+// @Summary 用户登录
+// @Tags 用户模块
+// @Param name formData string false "username"
+// @Param phone formData string false "phone"
+// @Param password formData string false "password"
+// @Schemes
+// @Description login
+// @Success 200 {string} user
+// @Router /user/login [post]
+func Login(c *gin.Context) {
+	// 通过用户名查询记录
+	user := &models.UserBasic{}
+	user.Name = c.PostForm("name")
+	user.Phone = c.PostForm("phone")
+	db := models.FindUser(user)
+	if db.RowsAffected == 0 {
+		c.JSON(-1, gin.H{
+			"success": 0,
+			"message": "user not found",
+		})
+	}
+	// 比对密码
+	password := c.PostForm("password")
+	isCorrect := utils.ValidatePassword(password, user.Salt, user.Password)
+	if isCorrect {
+		c.JSON(200, gin.H{
+			"success": 1,
+			"message": "login successfully",
+		})
+	} else {
+		c.JSON(-1, gin.H{
+			"success": 0,
+			"message": "wrong password",
+		})
+	}
+
+}
+
 // createUser
 // @Summary 新建用户
 // @Tags 用户模块
@@ -137,6 +176,11 @@ func UpdateUser(c *gin.Context) {
 	user.Phone = c.PostForm("phone")
 	user.Email = c.PostForm("email")
 
+	// 加salt生成password
+	salt := utils.GenSalt()
+	user.Salt = salt
+	user.Password = utils.MakePassword(user.Password, salt)
+
 	// 验证数据并响应
 	_, err := govalidator.ValidateStruct(user)
 	utils.HandleError(err, func() {
@@ -145,11 +189,19 @@ func UpdateUser(c *gin.Context) {
 			"message": "数据格式不合法",
 		})
 	}, func() {
-		success := models.UpdateUser(user).RowsAffected
-		c.JSON(200, gin.H{
-			"success": success,
-			"message": "修改成功",
-		})
+		db := models.UpdateUser(user)
+		if db.RowsAffected != 0 {
+			c.JSON(200, gin.H{
+				"success": db.RowsAffected,
+				"message": "修改成功",
+			})
+		} else {
+			c.JSON(-1, gin.H{
+				"success": 0,
+				"message": "修改失败",
+			})
+		}
+
 	})
 
 }

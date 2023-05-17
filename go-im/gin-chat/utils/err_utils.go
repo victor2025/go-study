@@ -15,7 +15,7 @@ func HandleError(err error, cbs ...func()) {
 		onSuccess = cbs[1]
 	}
 	if err != nil {
-		log.Panicf("Error: %v", err)
+		log.Printf("Error: %v", err)
 		if onError != nil {
 			onError()
 		}

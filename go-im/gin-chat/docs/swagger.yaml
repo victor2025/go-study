@@ -86,6 +86,30 @@ paths:
       summary: 获取用户列表
       tags:
       - 用户模块
+  /user/login:
+    post:
+      description: login
+      parameters:
+      - description: username
+        in: formData
+        name: name
+        type: string
+      - description: phone
+        in: formData
+        name: phone
+        type: string
+      - description: password
+        in: formData
+        name: password
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: 用户登录
+      tags:
+      - 用户模块
   /user/update:
     post:
       description: update user
